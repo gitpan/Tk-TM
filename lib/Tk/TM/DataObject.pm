@@ -16,7 +16,7 @@ use Tk::TM::Lang;
 use Tk::TM::DataObjSet;
 
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
-$VERSION = '0.50';
+$VERSION = '0.51';
 @ISA = qw(Exporter);
 
 use vars qw($Current @Available $Error $Search);

@@ -120,7 +120,7 @@ sub Help {
  my $self  =shift;
  my $opt   =$_[0] ||'';
  my $title ='';
- my $abou0 =["Tk Transaction Manager","Andrew V Makarow, makarow\@mail.com"];
+ my $abou0 =["Tk Transaction Manager","Andrew V Makarow <makarow\@mail.com>, Denis E Medveduyk <demed\@mail.com>"];
  my $about =undef;
  my $help  =undef;
  my $ehlp  =undef;

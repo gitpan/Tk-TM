@@ -1561,6 +1561,8 @@ or reference to array of [name, type, options for C<Tk::Menu>].
 
 =over
 
+=item "12/08/2000" - fixed bad event type or keysym 'ô'
+
 
 =item "06/02/2000" - first documented release
 

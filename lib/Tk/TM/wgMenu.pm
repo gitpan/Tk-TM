@@ -16,7 +16,7 @@ use Tk::TM::Lang;
 use Tk::TM::DataObjSet;
 
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
-$VERSION = '0.50';
+$VERSION = '0.51';
 @ISA = ('Tk::Frame','Tk::TM::DataObjSet');
 
 Tk::Widget->Construct('tmMenu'); 
@@ -40,7 +40,7 @@ sub Populate {
  print "Populate1(",keys(%$args),")\n" if $Tk::TM::Common::Debug;
 
  my $mt  =Tk::TM::Lang::txtMenu();
- my @mnu =( [$$mt[0], 'fô'
+ my @mnu =( [$$mt[0], 'f' .substr($$mt[0],0,1)
             ,[$$mt[1],'',-accelerator=>'Shift+F2',-command=>sub{$self->Save()}]
             ,[$$mt[2],'',-accelerator=>'F5',-command=>sub{$self->Reread()}]
             ,['separator']
@@ -51,7 +51,7 @@ sub Populate {
             ,[$$mt[6],'',-accelerator=>'Alt+F4',-command=>sub{$self->toplevel->destroy}]
             ,[$$mt[7],'',-accelerator=>'Shift+F3',-command=>sub{exit}]
             ]
-           ,[$$mt[8], 'eð'
+           ,[$$mt[8], 'e' .substr($$mt[8],0,1)
             ,[$$mt[ 9],'',-accelerator=>'Ctrl+N',-command=>sub{$self->RowNew()}]
             ,[$$mt[10],'',-accelerator=>'Ctrl+Y',-command=>sub{$self->RowDel()}]
             ,[$$mt[11],'',-command=>sub{$self->RowUndo()}]
@@ -65,8 +65,8 @@ sub Populate {
             ,[$$mt[17],'',-accelerator=>'Ctrl+Del',-command=>sub{$mw->focusCurrent->clipboardClear}]
          #  ,[$$mt[18],'',-command=>sub{$mw->focusCurrent->selectAll}]
             ]
-           ,[$$mt[19], 'aä']
-           ,[$$mt[20], 'sï'
+           ,[$$mt[19], 'a' .substr($$mt[19],0,1)]
+           ,[$$mt[20], 's' .substr($$mt[20],0,1)
             ,[$$mt[21],'',-command=>sub{$self->Retrieve()}]
             ,[$$mt[22],'',-accelerator=>'F5',-command=>sub{$self->Reread()}]
             ,[$$mt[23],'',-command=>sub{$self->Clear()}]
@@ -79,7 +79,7 @@ sub Populate {
             ,[$$mt[28],'',-accelerator=>'PageDown',-command=>sub{$self->RowGo('pgdn')}]
             ,[$$mt[29],'',-accelerator=>'Ctrl+End',-command=>sub{$self->RowGo('bot')}]
             ]
-           ,[$$mt[30], 'hñ'
+           ,[$$mt[30], 'h' .substr($$mt[30],0,1)
             ,[$$mt[31],'',-accelerator=>'F1',-command=>sub{$self->Help()}]
             ,[$$mt[32],'',-command=>sub{$self->Help('about')}]
             ]);
