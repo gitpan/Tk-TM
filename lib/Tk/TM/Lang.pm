@@ -12,7 +12,7 @@ use strict;
 require Exporter;
 
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
-$VERSION = '0.50';
+$VERSION = '0.52';
 @ISA = qw(Exporter);
 @EXPORT = qw();
 @EXPORT_OK = qw(txtMenu txtHelp txtMsg);
@@ -104,7 +104,7 @@ sub txtMenu {
   ['File','~Save','~Reread','~Print...','~Export...','~Import...','~Close','~Exit'
   ,'Edit','~New record','~Delete record','~Undo record','~Prompt...','~Undo','Cu~t','~Copy','~Paste','De~lete','Select ~All'
   ,'Actions'
-  ,'Search','~Query','~Reread','~Clear','~Find...','Find ~Next','~Top','~Previos','Ne~xt','~Bottom'
+  ,'Search','~Query','~Reread','~Clear','Con~dition...','~Find...','Find ~Next','~Top','~Previos','Ne~xt','~Bottom'
   ,'Help','~Help...','~About...'
   ]
   ) if !$Lang;
@@ -113,7 +113,7 @@ sub txtMenu {
   ['Файл','~Сохранить','~Перечитать','~Печатать...','~Экспорт...','~Импорт...','~Закрыть','~Выход'
   ,'Редактировать','~Новая запись','~Удалить запись','~Отменить редактирование','~Подсказка...','~Undo','~Вырезать','~Копировать','Вст~авить','~Удалить','Select ~All'
   ,'Действия'
-  ,'Поиск','~Запрос','~Перечитать','~Очистить','~Найти...','~Найти далее','~Начало','~Предыдущая','~Следующая','~Последняя'
+  ,'Поиск','~Запрос','~Перечитать','~Очистить','~Условие...','~Найти...','~Найти далее','~Начало','~Предыдущая','~Следующая','~Последняя'
   ,'Справка','~Справка...','~О приложении...'
   ]
   ) if $Lang;
@@ -128,6 +128,7 @@ sub txtMsg {
  ,'Choose' => 'Выбрать'
  ,'Close' => 'Закрыть'
  ,'Closing' => 'Закрытие'
+ ,'Condition' => 'Условие'
  ,'Data was modified' => 'Данные были изменены'
  ,'Database' => 'База данных'
  ,'Error' => 'Ошибка'
@@ -139,11 +140,13 @@ sub txtMsg {
  ,'Ok' => 'Исполнить'
  ,'Opening' => 'Открытие'
  ,'Operation' => 'Деятельность'
+ ,'Order by' => 'Сортировка'
  ,'Pardon' => 'Извините'
  ,'Password' => 'Пароль'
  ,'Save changes?' => 'Сохранить изменения?'
  ,'Save data into file' => 'Сохранить данные в файл'
  ,'User' => 'Пользователь'
+ ,'Where condition' => 'Условие'
  ,'Writing' => 'Запись'
  );
  return($msg{$_[0]} || $_[0]);

@@ -93,7 +93,7 @@ See Tk::TM::Lib for main descriptions and principles.
         $do->Retrieve('#reread')
   }
   elsif ($cmd eq 'dbRead') {
-        $self->dsRowFeedAll("select...", $self->{-parm}->{XXX})
+        $self->DBICmd("select...", $self->{-parm}->{XXX})
   }
   else  {return $self->doDefault($cmd, @_)}
  }
@@ -141,15 +141,17 @@ Tk parameters of C<Tk::TM::wApp> window may be set via C<configure>
 C<Tk> method. They may be all parameters of C<Tk::MainWindow>.
 
 TM parameters may be accessed via C<set> method of C<Tk::TM>. They are:
-C<-wgmnu>, C<-wglst>, C<-wgscr>, C<-title>,
-C<-mdlst>,
+C<-wgmnu>, C<-wgnav>, C<-wgscr>, C<-title>,
+C<-mdnav>,
 C<-parm>
 
 
-=item -mdlst = 'lst' || 'tree'
+=item -mdnav = 'treee' || 'tree' || 'lst'
 
 Mode of navigation between application screens.
-Default is 'tree', that means that detail screen should be opened
+Default is 'treee' ('tree exact'), that means that detail screen may be opened
+only if it`s master screen is current; this mode may be excluded in future.
+Mode 'tree' means that detail screen should be opened
 for it`s master screen and if master was previously used.
 Mode 'lst' means that screens are using C<-parm> values filled in
 'stop' command of screen`s sub or C<doEnd> event of data object.
@@ -168,7 +170,7 @@ Other parts are combined for current application`s screen.
 Default value is title of the window.
 
 
-=item -wglst
+=item -wgnav
 
 Widget with list of all available application screens.
 This is navigation pane of application.
@@ -204,13 +206,18 @@ C<Tk::TM::Lib>.
 Special methods are C<setscr>, C<Start>.
 
 
-=item setscr (level, title, ?sub, ?opt)
+=item setscr (level, label, ?sub, ?parm, ?opt)
 
 Defines screen of application.
 Level is number of nest of screen in tree, where 0 is top level.
+Label of the screen will be displayed at the navigation pane and as part
+of the title of the window. 
+Special label 'Login' is used for predefined login screen.
 Sub is code to create widgets and data objects of screen.
-Opt is options (scalar or ref), used within sub.
-Special title 'Login' is used for predefined login screen.
+Sub may also be filename relative to $0 path, it will be executed with C<do> to
+obtain code.
+Parm is hash reference with parameters of the screen to use inside sub.
+Opt is hash reference with screen options, available via screen description, see C<\&callback>.
 
 
 =item Start
@@ -237,10 +244,11 @@ option string, description of parent screen.
 The command is string 'start' or 'stop'.
 
 The descriptions are hash references with entries
-C<-cbcmd>, C<-cbnme>, C<-dos>, C<-opt>, 
+C<-cbcmd>, C<-cbnme>, C<-do>, C<-dos>, 
 C<-wgapp>, C<-wgmnu>, C<-wgscr>,
 C<-label>, C<-title>,
-C<-parm>
+C<-parm>, C<-parmc>,
+C<-reread>, C<-rereadc>
 
 
 =item start
@@ -266,6 +274,11 @@ Reference to this callback sub.
 Name of this callback sub for dynamic loading.
 
 
+=item -do
+
+Reference to first data object in C<-dos> list, to shorten access from outside.
+
+
 =item -dos
 
 Reference to list of data objects of screen. Callback should set it.
@@ -274,43 +287,57 @@ At the first open of the screen this is not defined.
 
 =item -label
 
-Label of the screen as displayed in C<-wglst>.
+Label of the screen as displayed in C<-wgnav>.
 Title of application window is combined with title of application, 
 label of the screen,
 title of the screen (described below at C<-title>)
 
 
-=item -opt
-
-Options, defined with C<setscr>.
-
-
 =item -parm
 
-Programmer`s parameters of screen, hash.
+Programmer`s parameters of the screen, defined with C<setscr> hash ref.
+It is not the same as '-parm' in C<Tk::TM::wApp> or C<Tk::TM::wgMenu>.
+
+
+=item -parmc
+
+Common to C<Tk::TM::wApp> or C<Tk::TM::wgMenu> object programmer`s parameters.
+This is also available via C<-wgapp> or C<-wgmnu>.
+
+
+=item -reread
+
+Reread this master screen internally before it's detail open.
+
+
+=item -rereadc
+
+Reread this master screen internally before it's detail open 
+and turn off this toggle.
 
 
 =item -title
 
 Title of the screen, represents data displayed on screen.
-This is the third part of application window title. Other
-parts are the title of the application and the label of the screen C<-label>.
+Title of application window is combined with title of application, 
+label of the screen (described above at C<-label>),
+title of the screen.
 
 
 =item -wgapp
 
-Application window, provided by C<Tk::wApp>.
+Application window, provided by C<Tk::TM::wApp>.
 
 
 =item -wgmnu
 
-Application`s menu bar, provided by C<Tk::wApp>.
+Application`s menu bar, provided by C<Tk::TM::wApp>.
 
 
 =item -wgscr
 
 Widget for application screen, to create application widgets inside it.
-Provided by C<Tk::wApp>.
+Provided by C<Tk::TM::wApp>.
 C<Tk::Frame> widget is used.
 
 
@@ -324,6 +351,35 @@ C<Tk::Frame> widget is used.
 =head1 VERSION
 
 =over
+
+
+=item "22-25/10/2000"
+
+C<exit> calls replaced with C<Tk::exit> calls to avoid abnormal program 
+terminations.
+
+C<Tk::TM::Common::DBILogin> used for login screen.
+
+C<setscr> - Sub may be filename relative to $0 path, it will be executed with C<do> to
+obtain code. Opt parameter added.
+
+Master's DataObject data is not retrieved when it's detail opening, 
+as in 'tree' mode was. Application supposes now that only current row of master data
+is needed and this is unchanged in database by other screens.
+To do internal reread C<-reread> and C<-rereadc> screen descriptions may be used.
+
+Error processing for callbacks added.
+
+C<-do> screen description created.
+
+C<-opt> screen description removed, C<-parm> should be used instead.
+
+C<-parmc> screen description created.
+
+C<-wglst> parameter of C<Tk::TM::wApp> renamed to C<-wgnav>.
+
+C<-mdlst> parameter of C<Tk::TM::wApp> renamed to C<-mdnav>. 
+New value 'treee' ('tree exact') is set as default.
 
 
 =item "06/02/2000"

@@ -9,12 +9,12 @@
 package Tk::TM::wgTable;
 require 5.000;
 use strict;
-require Exporter;
+# require Exporter;
 use Tk;
 use Tk::TM::Common;
 
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
-$VERSION = '0.50';
+$VERSION = '0.52';
 @ISA = ('Tk::Derived','Tk::Frame');
 
 Tk::Widget->Construct('tmTable'); 
@@ -27,7 +27,7 @@ sub Populate {
  # print "********Populate/Initing...\n";
  $self->initialize();
  foreach my $opt ($self->set()) {
-   if ($args->{$opt}) {
+   if (exists($args->{$opt})) {
       $self->set($opt=>$args->{$opt});
       delete($args->{$opt});
    }
@@ -49,7 +49,7 @@ sub initialize {
  my $mw   =$self->parent;
  $self->{-do}       =undef; # transaction manager            # configurable
  $self->{-colspecs} =[];    # widgetSpec =$self->[$col]      # configurable
- $self->{-rowcount} =3;     # count of rows                  # configurable
+ $self->{-rowcount} =8;     # count of rows                  # configurable
  $self->{-widgets}  =[];    # widget =$self->[$row]->[$col]
 }
 
@@ -81,7 +81,7 @@ sub set {
         $wg->bind('<Control-End>' ,sub{$self->{-do}->RowGo('bot')});
         $wg->bind('<FocusIn>' ,sub{$self->{-do}->wgFldFocusIn ($wg, $col1, $row1)});
         $wg->bind('<FocusOut>',sub{$self->{-do}->wgFldFocusOut($wg, $col1, $row1)});
-        $wg->bind('<Key-F4>'  ,sub{$self->{-do}->wgFldHelper  ($wg, $col1, $row1)});
+      # $wg->bind('<Key-F4>'  ,sub{$self->{-do}->wgFldHelper  ($wg, $col1, $row1)});
       }
     }
  }
@@ -92,15 +92,16 @@ sub set {
 sub Remake {
  my $self =shift;
 
+ $self->{-widgets}=[];
  foreach my $wg ($self->children) {
    $wg->destroy();
  }
 
  my $col =-1;
  foreach my $wgs (@{$self->{-colspecs}}) {
+       next if !defined($wgs);
        $col++;
-       my @wgs =@{$wgs};
-       my $wgn =shift(@wgs);
+       my $wgn =$wgs->[!defined($wgs->[0]) || $wgs->[0] =~/^\d+$/ ? 1 : 0];
        my $wg;
        if ($wgn) {
           $wg =$self->Label(-text, !ref($wgn) ? $wgn : @$wgn);
@@ -110,13 +111,18 @@ sub Remake {
 
  for (my $row=0; $row <$self->{-rowcount}; $row++) {
    push(@{$self->{-widgets}}, []);
-   my $col =-1;
+   my ($col,$colp) =(-1,-1);
    foreach my $wgs (@{$self->{-colspecs}}) {
        $col++;
-       my @wgs =@{$wgs}; shift(@wgs);
-       my $wgn =shift(@wgs);
+       if (!defined($wgs)) {$self->{-widgets}->[$row]->[$col] =undef; next}
+       $colp++;
+       my $wgi =1;
+       $wgi++ if    !defined($wgs->[0]) || $wgs->[0] =~/^\d+$/;
+       $wgi++ while !defined($wgs->[$wgi]) || $wgs->[$wgi] =~/^\d+$/;
+       my $wgn =$wgs->[$wgi];
+       my @wgs =$#{@$wgs} <$wgi ? () : @{$wgs}[$wgi+1 .. $#{@$wgs}];
        my $wg  =$self->$wgn(@wgs);
-       $wg->grid(-column=>$col, -row=>$row+1, -sticky=>'w');
+       $wg->grid(-column=>$colp, -row=>$row+1, -sticky=>'w');
        $self->{-widgets}->[$row]->[$col] =$wg;
    }
  }
@@ -126,23 +132,38 @@ sub Remake {
 }
 
 #######################
-sub Display {
-  my ($self) =(shift);
-  if ($self->{-do}) {
-    my $do  =$self->{-do};
-    my $row =-1;
-    my $rowadd =$do->{-dsrid} -($do->{-dsrsd} ||0);
-       $rowadd =0 if $rowadd <0;
-    # print "Display: ",$do->{-dsrid},":",-$do->{-dsrsd},"+",$rowadd,"\n";
-    foreach my $wgrow (@{$self->{-widgets}}) {
-      $row++;
-      my $rowdta =$do->dsRowDta($row +$rowadd);
-      my $col    =-1;
-      foreach my $wg (@$wgrow) {
-        $col++;
-        next if !Exists($wg) || ref($wg) eq 'Tk::Label';
-        ${$wg->cget(-textvariable)} =$rowdta->[$col];
+sub Adapt {
+  my $self =shift;
+  return($self) if !$self->{-do} || !$self->{-do}->{-dbfds};
+  my $dd =$self->{-do}->{-dbfds};
+  my $aw =$self->{-do}->{-dbfaw};
+  for (my $c =0; $c <=$#{@{$self->{-widgets}->[0]}}; $c++) {
+      next if !$dd->[$c] || !$dd->[$c]->{PRECISION};
+      my $w =$dd->[$c]->{PRECISION}; $w =$aw if $w >$aw && $aw >1;
+      for (my $r =0; $r <=$#{@{$self->{-widgets}}}; $r++) {
+          next if !Exists($self->{-widgets}->[$r]->[$c]);
+          eval{$self->{-widgets}->[$r]->[$c]->configure(-width=>$w)};
       }
+  }
+  $self
+}
+
+#######################
+sub Display {
+  my $self =shift;
+  return $self if !$self->{-do};
+  my $do  =$self->{-do};
+  my $row =-1;
+  my $rowadd =$do->{-dsrid} -($do->{-dsrsd} ||0);
+     $rowadd =0 if $rowadd <0;
+  foreach my $wgrow (@{$self->{-widgets}}) {
+    $row++;
+    my $rowdta =$do->dsRowDta($row +$rowadd);
+    my $col    =-1;
+    foreach my $wg (@$wgrow) {
+      $col++;
+      next if !Exists($wg) || ref($wg) eq 'Tk::Label';
+      eval{${$wg->cget(-textvariable)} =$rowdta->[$col]};
     }
   }
   $self
@@ -154,11 +175,13 @@ sub Focus {
   my $do  =$self->{-do};
   return if !$do;
   if (ref($do) && defined($do->{-dsrfd}) && defined($do->{-dsrsd})) {
-     $self->{-widgets}->[($do->{-dsrsd} <0 ? 0 : $do->{-dsrsd})]->[$do->{-dsrfd}]->focusForce()
+     my $wg =$self->{-widgets}->[($do->{-dsrsd} <0 ? 0 : $do->{-dsrsd})]->[$do->{-dsrfd}];
+     return $wg->focusForce() if ref($wg)
   }
   else {
      foreach my $wg (@{$self->{-widgets}->[0]}) {
-        return($wg->focusForce()) if ref($wg)
+        return $wg->focusForce() if ref($wg)
      }
   }
+  return $self->focusForce()
 }

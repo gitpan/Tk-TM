@@ -9,14 +9,14 @@
 package Tk::TM::DataObjSet;
 require 5.000;
 use strict;
-require Exporter;
+# require Exporter;
 use Tk::TM::Common;
 use Tk::TM::Lang;
 use Tk::TM::DataObject;
 
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
-$VERSION = '0.50';
-@ISA = qw(Exporter);
+$VERSION = '0.52';
+# @ISA = qw(Exporter);
 
 use vars qw($Current);
 $Current    =undef;    # Current DataObjSet
@@ -60,8 +60,14 @@ sub destroybind {
  my $self =$_[0];
  print "destroybind(",join(', ',map {defined($_) ? $_ : 'null'} @_),")\n" if $Tk::TM::Common::Debug;
  foreach my $do (@{$self->{-dos}}) {
-    $do->destroy();
+    $do->destroy() if ref($do);
  }
+ $self->{-dos}   =undef;
+ $self->{-wgind} =undef;
+ $self->{-about} =undef;
+ $self->{-help}  =undef;
+ $self->{-parm}  =undef;
+
 }
 
 
@@ -89,7 +95,7 @@ sub set {
  }
  if ($opt{-dos} && @{$opt{-dos}}) {
     foreach my $do (@{$self->{-dos}}) {
-       $do->set(-wgnav=>$self);
+       $do->set(-wgmnu=>$self);
     }
     my $do =$self->DataObject();
     if (ref($do)) {$self->{-mdedt} =$do->set(-mdedt); $md =1};
@@ -192,7 +198,7 @@ sub HelpDebug {
 
  $ret =$ret ."\n*** Common paramters ***\n";
  $val =$self->set(-parm);
- foreach my $k (keys(%$val)) {
+ foreach my $k (sort(keys(%$val))) {
    $ret =$ret ."$k\t=>" .(!defined($val->{$k}) ? 'null' : $val->{$k}) ."\n"
  }
 
@@ -200,17 +206,37 @@ sub HelpDebug {
 
  $ret =$ret ."\n*** Paramters of current data object ***\n";
  $val =$do->set(-parm);
- foreach my $k (keys(%$val)) {
+ foreach my $k (sort(keys(%$val))) {
    $ret =$ret ."$k\t=>" .(!defined($val->{$k}) ? 'null' : $val->{$k}) ."\n"
  }
 
  $ret =$ret ."\n*** Fields in current data object ***\n";
  $val =$do->set(-dbfds);
  foreach my $f (@$val) {
-   foreach my $k (keys(%$f)) {
+   foreach my $k (sort(keys(%$f))) {
      $ret =$ret ."$k\t=>" .(!defined($f->{$k}) ? 'null' : $f->{$k}) .";\t";
    }
    $ret =$ret ."\n";
+ }
+
+ $ret =$ret ."\n*** Structure of current data object ***\n";
+ foreach my $k (sort(keys(%$do))) {
+   next if $k =~/dsdta|dsrd0|parm|parmc/i;
+   if    (ref($do->{$k}) !~/array|hash/i) {$ret =$ret ."$k\t=>" .(!defined($do->{$k}) ? 'null' : $do->{$k}) .";\n";}
+   elsif (ref($do->{$k}) eq 'ARRAY') {
+         $ret =$ret ."$k\t=>[";
+         foreach my $e (@{$do->{$k}}) {
+           $ret =$ret .(!defined($e) ? 'null' : $e) ."; ";
+         }
+         $ret =$ret ."];\n";
+   }
+   elsif (ref($do->{$k}) eq 'HASH') {
+         $ret =$ret ."$k\t=>{";
+         foreach my $e (sort(keys(%{$do->{$k}}))) {
+           $ret =$ret ."$e=>" .(!defined($do->{$k}->{$e}) ? 'null' : $do->{$k}->{$e}) ."; ";
+         }
+         $ret =$ret ."};\n";
+   }
  }
  $ret
 }
@@ -273,6 +299,8 @@ sub doAll {               # Do for all data objects
 sub Action {shift->doCurrent(sub{shift->Action(@_)},@_)}
 
 sub Clear {shift->doAll(sub{shift->Clear(@_)},@_)}
+
+sub DBICnd {shift->doCurrent(sub{shift->DBICnd(@_)},@_)}
 
 sub Export {shift->doCurrent(sub{shift->Export(@_)},@_)}
 

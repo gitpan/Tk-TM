@@ -8,7 +8,7 @@
 package Tk::TM::wDialogBox;
 require 5.000;
 use strict;
-require Exporter;
+# require Exporter;
 use Tk;
 use Tk::DialogBox;
 use Tk::TM::Lang;

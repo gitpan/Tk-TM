@@ -9,14 +9,14 @@
 package Tk::TM::wgMenu;
 require 5.000;
 use strict;
-require Exporter;
+# require Exporter;
 use Tk;
 use Tk::TM::Common;
 use Tk::TM::Lang;
 use Tk::TM::DataObjSet;
 
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
-$VERSION = '0.51';
+$VERSION = '0.52';
 @ISA = ('Tk::Frame','Tk::TM::DataObjSet');
 
 Tk::Widget->Construct('tmMenu'); 
@@ -49,7 +49,7 @@ sub Populate {
             ,[$$mt[5],'',-command=>sub{$self->Import()}]
             ,['separator']
             ,[$$mt[6],'',-accelerator=>'Alt+F4',-command=>sub{$self->toplevel->destroy}]
-            ,[$$mt[7],'',-accelerator=>'Shift+F3',-command=>sub{exit}]
+            ,[$$mt[7],'',-accelerator=>'Shift+F3',-command=>sub{Tk::exit}]
             ]
            ,[$$mt[8], 'e' .substr($$mt[8],0,1)
             ,[$$mt[ 9],'',-accelerator=>'Ctrl+N',-command=>sub{$self->RowNew()}]
@@ -70,18 +70,19 @@ sub Populate {
             ,[$$mt[21],'',-command=>sub{$self->Retrieve()}]
             ,[$$mt[22],'',-accelerator=>'F5',-command=>sub{$self->Reread()}]
             ,[$$mt[23],'',-command=>sub{$self->Clear()}]
+            ,[$$mt[24],'',-command=>sub{$self->DBICnd()}]
             ,['separator']
-            ,[$$mt[24],'',-accelerator=>'Ctrl+F',-command=>sub{$self->Find()}]
-            ,[$$mt[25],'',-accelerator=>'Ctrl+G',-command=>sub{$self->FindNxt()}]
+            ,[$$mt[25],'',-accelerator=>'Ctrl+F',-command=>sub{$self->Find()}]
+            ,[$$mt[26],'',-accelerator=>'Ctrl+G',-command=>sub{$self->FindNxt()}]
             ,['separator']
-            ,[$$mt[26],'',-accelerator=>'Ctrl+Home',-command=>sub{$self->RowGo('top')}]
-            ,[$$mt[27],'',-accelerator=>'PageUp',-command=>sub{$self->RowGo('pgup')}]
-            ,[$$mt[28],'',-accelerator=>'PageDown',-command=>sub{$self->RowGo('pgdn')}]
-            ,[$$mt[29],'',-accelerator=>'Ctrl+End',-command=>sub{$self->RowGo('bot')}]
+            ,[$$mt[27],'',-accelerator=>'Ctrl+Home',-command=>sub{$self->RowGo('top')}]
+            ,[$$mt[28],'',-accelerator=>'PageUp',-command=>sub{$self->RowGo('pgup')}]
+            ,[$$mt[29],'',-accelerator=>'PageDown',-command=>sub{$self->RowGo('pgdn')}]
+            ,[$$mt[30],'',-accelerator=>'Ctrl+End',-command=>sub{$self->RowGo('bot')}]
             ]
-           ,[$$mt[30], 'h' .substr($$mt[30],0,1)
-            ,[$$mt[31],'',-accelerator=>'F1',-command=>sub{$self->Help()}]
-            ,[$$mt[32],'',-command=>sub{$self->Help('about')}]
+           ,[$$mt[31], 'h' .substr($$mt[30],0,1)
+            ,[$$mt[32],'',-accelerator=>'F1',-command=>sub{$self->Help()}]
+            ,[$$mt[33],'',-command=>sub{$self->Help('about')}]
             ]);
 
  my %bo=(-takefocus=>0,-relief=>'groove');
@@ -139,12 +140,13 @@ sub Populate {
  $mw->bind('<Shift-F3>'    ,sub{exit});
  $mw->bind('<Control-n>'   ,sub{$self->RowNew()});
  $mw->bind('<Control-y>'   ,sub{$self->RowDel()});
+ $mw->bind('<Key-F4>'      ,sub{$self->FldHelp()});
  $mw->bind('<Control-f>'   ,sub{$self->Find()});
  $mw->bind('<Control-l>'   ,sub{$self->FindNxt()});
  $mw->bind('<Control-g>'   ,sub{$self->FindNxt()});
  $mw->bind('<Key-F1>'      ,sub{$self->Help()});
 
- $self->bind('<Destroy>'   ,sub{$self->destroybind() if $_[0] eq $self});
+ $self->bind('<Destroy>'   ,sub{$self->destroybind() if $_[0] && $_[0] eq $self});
 
  $self->mdApply();
 }
@@ -267,12 +269,13 @@ sub mdApply {
        $mnu->[0]->cget(-menu)->entryconfigure(4,%opt);
        $mnu->[3]->cget(-menu)->entryconfigure(0,%opt);
        $mnu->[3]->cget(-menu)->entryconfigure(1,%opt);
-       $mnu->[3]->cget(-menu)->entryconfigure(4,%opt);
+       $mnu->[3]->cget(-menu)->entryconfigure(3,%opt);
        $mnu->[3]->cget(-menu)->entryconfigure(5,%opt);
-       $mnu->[3]->cget(-menu)->entryconfigure(7,%opt);
+       $mnu->[3]->cget(-menu)->entryconfigure(6,%opt);
        $mnu->[3]->cget(-menu)->entryconfigure(8,%opt);
        $mnu->[3]->cget(-menu)->entryconfigure(9,%opt);
        $mnu->[3]->cget(-menu)->entryconfigure(10,%opt);
+       $mnu->[3]->cget(-menu)->entryconfigure(11,%opt);
        }
     }
  }
@@ -303,12 +306,13 @@ sub mdApply {
        $mnu->entrycget(0,-menu)->entryconfigure(4,%opt);
        $mnu->entrycget(3,-menu)->entryconfigure(0,%opt);
        $mnu->entrycget(3,-menu)->entryconfigure(1,%opt);
-       $mnu->entrycget(3,-menu)->entryconfigure(4,%opt);
+       $mnu->entrycget(3,-menu)->entryconfigure(3,%opt);
        $mnu->entrycget(3,-menu)->entryconfigure(5,%opt);
-       $mnu->entrycget(3,-menu)->entryconfigure(7,%opt);
+       $mnu->entrycget(3,-menu)->entryconfigure(6,%opt);
        $mnu->entrycget(3,-menu)->entryconfigure(8,%opt);
        $mnu->entrycget(3,-menu)->entryconfigure(9,%opt);
        $mnu->entrycget(3,-menu)->entryconfigure(10,%opt);
+       $mnu->entrycget(3,-menu)->entryconfigure(11,%opt);
        }
     }
  }

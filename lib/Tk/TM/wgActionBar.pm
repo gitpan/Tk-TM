@@ -9,7 +9,7 @@
 package Tk::TM::wgActionBar;
 require 5.000;
 use strict;
-require Exporter;
+# require Exporter;
 use Tk;
 use Tk::TM::wgMenu;
 

@@ -12,8 +12,8 @@ use Tk::TM::Lang;
 use Tk::TM::DataObject;
 use Tk::TM::wgTable;
 use Tk::TM::wgBlank;
-use Tk::TM::wgActionBar;
 use Tk::TM::wgMenu;
+use Tk::TM::wgActionBar;
 
 package Tk::TM::Lib;
 1;

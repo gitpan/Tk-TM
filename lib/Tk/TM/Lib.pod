@@ -10,43 +10,87 @@ Tk::TM - Tk Transaction Manager - screen transactions with user.
 
 =head1 SYNOPSIS
 
+=over
+
+=item Using SQL and Widget Generator:
+
  use Tk::TM::Lib;
-
  Tk::TM::Common::DBILogin('dsn', 'user', '');
-
- my $mw =new Tk::MainWindow;
-
+ my $mw  =new Tk::MainWindow;
  my $mnu =$mw->tmMenu;
+ my $do  =new Tk::TM::DataObject();
+ $do->set(-sqgfd=>[
+      ['cruptb',undef,'id',   undef,  undef,'ID',   'Entry']
+     ,['crub',  undef,'class','    3',['select class from entity where x=?',1],'Class','Entry']
+     ,['crutb', undef,'name', undef,  undef,'Name', 'Entry']
+     ]
+   ,-sqgsf=>'entity'
+   ,-sqgso=>'id'
+   ,-sqgscr=>$mw
+   ,-sqgpt=>[-rowcount=>5]
+   )->form(-t=>$mnu);
+ $mnu->Retrieve;
+ Tk::MainLoop;
 
+
+=item Using SQL Statements:
+
+ use Tk::TM::Lib;
+ Tk::TM::Common::DBILogin('dsn', 'user', '');
+ my $mw =new Tk::MainWindow;
+ my $mnu =$mw->tmMenu;
  my $tbl =$mw->tmTable(-rowcount=>3, -colspecs=>
                         [['col1','Entry']
                         ,['col2','Entry']
                         ,['col3','Entry']]
                        )->form(-t=>$mnu);
-
  my $bln =$mw->tmBlank(-wgspecs=>
                         [['col1','Entry']
                         ,['col2','Entry']
                         ,['col3','Entry',-width=>30]]
                        )->form(-t=>$tbl);
+ new Tk::TM::DataObject(-wgtbl=>$tbl, -wgbln=>$bln
+                       ,-sqlsel=>['select...',value...]
+                       ,-sqlins=>['insert...',fieldnumber...]
+                       ,-sqlupd=>['update...',fieldnumber...]
+                       ,-sqldel=>['delete...',fieldnumber...]
+                       ); 
+ $mnu->Retrieve;
+ Tk::MainLoop;
 
+
+=item Low Level:
+
+ use Tk::TM::Lib;
+ Tk::TM::Common::DBILogin('dsn', 'user', '');
+ my $mw =new Tk::MainWindow;
+ my $mnu =$mw->tmMenu;
+ my $tbl =$mw->tmTable(-rowcount=>3, -colspecs=>
+                        [['col1','Entry']
+                        ,['col2','Entry']
+                        ,['col3','Entry']]
+                       )->form(-t=>$mnu);
+ my $bln =$mw->tmBlank(-wgspecs=>
+                        [['col1','Entry']
+                        ,['col2','Entry']
+                        ,['col3','Entry',-width=>30]]
+                       )->form(-t=>$tbl);
  my $sub =sub{ my $self =shift;
-          if    ($_[0] eq 'dbRead') {$self->DBICmd('select * from table')}
-          elsif ($_[0] eq 'dbIns')  {$self->DBICmd('insert...')}
-          elsif ($_[0] eq 'dbUpd')  {$self->DBICmd('update...')}
-          elsif ($_[0] eq 'dbDel')  {$self->DBICmd('delete from table...')}
-          else                      {$self->doDefault(@_)}
-          };
-
+    if    ($_[0] eq 'dbRead') {$self->DBICmd('select * from table')}
+    elsif ($_[0] eq 'dbIns')  {$self->DBICmd('insert...')}
+    elsif ($_[0] eq 'dbUpd')  {$self->DBICmd('update...')}
+    elsif ($_[0] eq 'dbDel')  {$self->DBICmd('delete from table...')}
+    else                      {$self->doDefault(@_)}
+ };
  new Tk::TM::DataObject(-cbcmd=>$sub, -wgtbl=>$tbl, -wgbln=>$bln); # or:
  # $mnu->set(-dos=>[
  # new Tk::TM::DataObject(-cbcmd=>$sub, -wgtbl=>$tbl, -wgbln=>$bln)
  # ]);
-
  $mnu->Retrieve;
-
  Tk::MainLoop;
 
+
+=back
 
 =cut
 ***********************************************************************
@@ -99,7 +143,8 @@ C<Tk::TM::DataObject> uses C<Tk> widgets to present data,
 it can also simmultaniosly use one C<tmTable> and one C<tmBlank> widgets, mentioned below.
 C<DBI> can be used to interact with databases in several levels.
 The base level is using defined by programmer function(s) for database and user interactions.
-More developed levels may be autogeneration of SQL and using prepared in database metadata.
+More developed levels are autogeneration of SQL.
+Next more developed levels may be based on prepared in database metadata.
 Inherited from C<Tk::TM::DataObject> may be developed C<Tk::TM::DataObjTixGrid> that uses C<tixGrid> widget
 and C<Tk::TM::DataObjSeq> that uses sequentialy accessible data files as xBase files.
 
@@ -289,12 +334,15 @@ See also C<-help>
 
 =item Tk::TM::Common::DBILogin (dsn, user, password, ?opt, ?dbopt) -> dbh
 
+=item Tk::TM::Common::DBILogin (screen, dsn, user, password, ?opt, ?dbopt)
+
 Database login dialog, see C<DBI-E<gt>connect>.
 Options (default none): 
-'#dsn' - allow to edit dsn,
+'#dsn' or '#edit' - allow to edit dsn,
 '#return' - instead of modifying C<$Tk::TM::Common::DBH> only return dbh
 and return instead of exit when 'cancel' button pressed,
 '#center' - center login dialog on screen.
+Screen parameter is used for calls from C<Tk::TM::wApp>.
 
 
 =back
@@ -367,12 +415,15 @@ C<Tk::TM::DataObject> may be classified into:
 
 
 Object data: 
-C<-wgtbl>, C<-wgbln>, C<-wgarr>, C<-wgnav>, C<-wgind>,
+C<-wgtbl>, C<-wgbln>, C<-wgarr>, C<-wgmnu>, C<-wgind>,
 C<-mdedt>,
 C<-dsdtm>,
 C<-cbcmd>, C<-cbXXX>,
-C<-dbh>, C<-dbfnm>, C<-dbfds>,
-C<-parm>
+C<-dbh>, C<-dbfnm>, C<-dbfds>, C<-dbfaw>,
+C<-sqlsel>, C<-sqlins>, C<-sqlupd>, C<-sqldel>,
+C<-sqgscr>, C<-sqgfd>, C<-sqgsf>, C<-sqgsj>, C<-sqgsc>, C<-sqgso>, 
+C<-sqgpt>, C<-sqgpb>,
+C<-parm>, C<-parmc>
 
 
 Options of Tk::TM::DataObject operation:
@@ -429,7 +480,7 @@ C<$do-E<gt>doDefault>, C<$do-E<gt>doExport>, C<$do-E<gt>doImport>, C<$do-E<gt>do
 
 
 Useful methods for programming events (callbacks) used in implementations above:
-C<$do-E<gt>DBICmd>, C<$do-E<gt>DBIHlp>
+C<$do-E<gt>DBICmd>, C<$do-E<gt>DBICnd>, C<$do-E<gt>DBIGen>, C<$do-E<gt>DBIHlp>
 
 
 Events (callbacks) and transaction scheme:
@@ -489,6 +540,12 @@ of data object, and so programmer should use C<-cbcmd> or C<-cbXXX>,
 but not both.
 
 
+=item -dbfaw
+
+Widget width adaptation to database fields switch.
+Contains margin of widget width.
+
+
 =item -dbfds
 
 Reference to array of references to hashes with descriptions of fields.
@@ -516,6 +573,10 @@ Data store margin - max number of rows to keep in it.
 =item -mdedt
 
 Enable edit actions for user (edit mode).
+Values: 0 or '' - disable, digit -enable, 
+'c'reate or 'i'nsert enable,
+'u'pdate enable,
+'d'elete enable.
 Default is C<$Tk::TM::Common::Edit>.
 
 
@@ -523,6 +584,88 @@ Default is C<$Tk::TM::Common::Edit>.
 
 Programmer`s parameters, hash reference.
 Does`nt used by C<Tk::TM>, may be used for programmer`s needs.
+
+
+=item -parmc
+
+Common to C<Tk::TM::DataObjSet> object programmer`s parameters, hash reference.
+This is also available via $do->{C<-wgmnu>}->{-parm}.
+
+
+
+=item -sqgxxx - SQL and Widget Generator parameters
+
+=item -sqgscr = screen to generate widgets on, generation trigger
+
+If C<-sqgscr> and C<-sqgsf> specified, widget required will be generated and
+returned by C<$do-E<gt>set>.
+
+=item -sqgfd = [['cruvpktb', table, field, filter value, helper select, ?inccol, label, ?colSpan, ?rowSpan, wgType, ?wgOpt]]
+
+'crupktb' is field usage: 'c'reate or 'i'nsert, 'r'ead or 's'elect, 'u'pdate,
+'v'iew only,
+'p'rimary key, 'k'ey for commands,
+'t'able widget, 'b'lank widget.
+If table name is empty string, it will be automatically filled if possible;
+undefined table name will not be used in 'select' generation.
+Field name may be also expression to select.
+Filter value or sub will be used in 'where' clause and in C<$do-E<gt>RowNew> if defined.
+Helper select is value compliant to C<$do-E<gt>DBIHlp> and C<$do-E<gt>DBIGen> 
+interfaces, it may be 'sql select' string, 
+reference to array with 'sql select' string and numbers of fields or subs,
+reference to array of references to arrays with data strings.
+Values after 'helper select' are used for table or blank widget fields.
+
+=item -sqgsf = 'select from' clause
+
+=item -sqgsj = 'select where/join' subclause
+
+=item -sqgsc = 'select where/condition' subclause with/without parameters
+
+=item -sqgso = 'select order by' clause
+
+All clauses are strings to be placed after keyword mentioned.
+Where/condition parameter C<-sqgsc> may be also reference to array
+with string subclause and values or subs for SQL statement parameters.
+
+=item -sqgpt = parameters for table widget
+
+See C<Tk::TM::wgTable>.
+
+=item -sqgpb = parameters for blank widget
+
+See C<Tk::TM::wgBlank>.
+
+
+
+=item -sqlxxx - SQL templates for simplest SQL generator
+
+=item -sqlsel = SQL 'select' statement and parameters
+
+=item -sqlins = SQL 'insert' statement and parameters
+
+=item -sqlupd = SQL 'update' statement and parameters
+
+=item -sqldel = SQL 'delete' statement and parameters
+
+SQL templates for simplest SQL generator - strings, array refs, refs to arrays of refs.
+
+Simple string is SQL statement.
+'insert', 'update', 'delete' will be automatically supplied 
+with all data values of current row as parameters.
+'update' will be also supplied with old data values.
+
+Reference to array with string as first element is SQL statement with parameters.
+'select' parameters may be values or subs to evaluate.
+'insert', 'update', 'delete' parameters are subs to evaluate or column numbers, 
+negative values are treated like slices 
+(f.e. ['insert into table values (?,?,?)',0,-2] tells use columns 0,1,2).
+'update' old values are discovered as decrease of numbering
+(f.e. ['update table set xxx=?, yyy=? where k=?',0,-1,0]).
+
+Reference to array with reference as first element is treated 
+as sequence of SQL statements to execute within single transaction.
+
 
 
 =item -wgarr
@@ -546,7 +689,7 @@ Indicator widget for data object use with C<$do-E<gt>wgIndicate>.
 Optional.
 
 
-=item -wgnav
+=item -wgmnu
 
 Navigator widget - ancestor of C<Tk::TM::DataObjSet>.
 This may be used instead of C<-dos> of C<Tk::TM::DataObjSet>,
@@ -667,7 +810,7 @@ Data object become ready for insertion and editing new records of data.
 
 =item $do->DBICmd (?dbh, ?opt, command, [arguments], command, [arguments]...) ->result
 
-This is simplest C<DBI> interface, it executes C<dbh> command.
+Simplest C<DBI> interface, executes C<dbh> command.
 Database connection handle C<dbh> may be specified as argument, 
 or may be given from data object`s property C<-dbh> or from C<$Tk::TM::Common::DBH>.
 Option '#silent' declines usage of message box to display error occurred.
@@ -676,6 +819,21 @@ or string incipient with 'select', 'selectrow', 'insert', 'update', 'delete'.
 Commands 'select' and 'selectrow' retrieves data directly into data object`s data store.
 Several commands may be specified to execute them within one database transaction.
 With one command specified autocommit is assumed.
+
+
+
+=item $do->DBICnd() -> success
+
+Query condition and sort dialog.
+Works with all modes of SQL generation.
+
+
+=item $do->DBIGen(sql, opt, ?command) -> sql command
+
+SQL generator.
+In simplest mode it uses C<-sqlsel>, C<-sqlins>, C<-sqlupd>, C<-sqldel>.
+In complex mode it uses C<-sqgscr>, C<-sqgfd>, C<-sqgsf>, C<-sqgsj>, C<-sqgsc>, C<-sqgso>, C<-sqgpt>, C<-sqgpb>.
+
 
 
 =item $do->DBIHlp (?SQL, \@parameters, ?\@out_fields) -> success
@@ -1561,7 +1719,45 @@ or reference to array of [name, type, options for C<Tk::Menu>].
 
 =over
 
-=item "12/08/2000" - fixed bad event type or keysym 'ô'
+=item "22/10-03/11/2000"
+
+C<exit> calls replaced with C<Tk::exit> calls to avoid abnormal program 
+terminations.
+
+C<Key-F4> bindings moved from C<Tk::TM::DataObject>, C<Tk::TM::wgBlank>,
+C<Tk::TM::wgTable> to C<Tk::TM::wgMenu> to avoid conflict with 'Alt-F4'.
+
+C<Tk::TM::Common::DBILogin> unified for C<Tk::TM::wApp> use.
+
+Sleeping DataObject can operate with data in current row:
+C<$do-E<gt>Sleep> and C<$do-E<gt>Retrieve> uses new DataObject`s parameter 
+C<-dsslp> to indicate sleeping and save C<-dsrid>.
+
+C<-parmc> DataObject`s parameter created.
+
+C<-wgnav> DataObject`s parameter renamed to C<-wgmnu> for unification with C<Tk::TM::wApp>.
+
+Error processing for callbacks added.
+
+C<$do-E<gt>DBICmd> corrected - undefined attributes inserted into 'do' arguments.
+
+C<-dsrd0> DataObject`s parameter corrected - now it is filled with copy of C<$do-E<gt>dsRowDta>.
+
+C<-sqlsel>, C<-sqlins>, C<-sqlupd>, C<-sqldel> DataObject`s parameters added
+- simplest sql generator features implemented, see also C<$do-E<gt>DBIGen>.
+
+C<-sqgscr>, C<-sqgfd>, C<-sqgsf>, C<-sqgsj>, C<-sqgsc>, C<-sqgso>, 
+C<-sqgpt>, C<-sqgpb> DataObject`s parameters added
+- SQL and Widget generator created, see also C<$do-E<gt>DBIGen>.
+
+C<-mdedt> may contain 'c'reate or 'i'nsert, 'u'pdate, 'd'elete.
+
+C<$do-E<gt>DBICnd> - Query condition and sort dialog created.
+
+C<-dbfaw> DataObject`s parameter added - widget width adaptation to database fields implemented.
+
+
+=item "12/08/2000" - fixed bad event type or keysym 'ä'
 
 
 =item "06/02/2000" - first documented release
