@@ -9,15 +9,13 @@
 package Tk::TM::DataObject;
 require 5.000;
 use strict;
-# require Exporter;
 use Tk;
 use Tk::TM::Common;
 use Tk::TM::Lang;
 use Tk::TM::DataObjSet;
 
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
-$VERSION = '0.52';
-# @ISA = qw(Exporter);
+$VERSION = '0.53';
 
 use vars qw($Current @Available $Error $Search);
 $Current    ='';    # Current DO
@@ -468,7 +466,7 @@ sub wgFldFocusIn {           # Field got focus; internally used by ds
  # print "wgFldFocusIn1($wg,$fld,$row)\n" if $Tk::TM::Common::Debug;
  if ($row ne $self->{-dsrsd}) {
    # print "wgFldFocusIn2($wg,$fld,$row -> ",$self->{-dsrsd},")\n" if $Tk::TM::Common::Debug;
-   if (!$self->Stop('#save')) 
+   if (!$self->Stop('#save'))
       {$self->{-dsrwd}->focusForce(); $self->wgIndicate(); return(0)}
    if ($self->{-dsrid} +$row -$self->{-dsrsd} >$self->dsRowCount()-1) 
       {ref($self->{-dsrwd}) ? $self->{-dsrwd}->focusForce() : $self->dsFocus(); return(0)};
@@ -556,15 +554,31 @@ sub wgFldHelper {            # F4 field helper
 
 
 sub wgIndicate {
+ return 1 if !$_[0]->{-wgind};
+ my $col  =($_[0]->{-dsrfd} ||0);
+ my ($dbfd, $sqfd);
  $_[0]->{-wgind}->configure(-text=>(
-           '(r='   .(($_[0]->{-dsrid} ||0) +1)
-           .'/'    .$_[0]->dsRowCount()
-           .', c=' .(($_[0]->{-dsrfd} ||0) +1) 
-           .($_[0]->{-dsrnw} ? ' New' : '')
-           .($_[0]->{-dsrch} ? ' Chg' : '')
-           .') ' .($_[1] ||''))
-                           )
-    if $_[0]->{-wgind};
+   '(r='   .(($_[0]->{-dsrid} ||0) +1)
+   .'/'    .$_[0]->dsRowCount()
+   .', c=' .($col +1) 
+   .($_[0]->{-dsrnw} ? ' New' : '')
+   .($_[0]->{-dsrch} ? ' Chg' : '')
+   .')' 
+   .($_[0]->{-wgind}->cget(-relief) !~/sunken/i
+   ? ''
+   : defined($_[1])
+   ? ' ' .$_[1]
+   : ' '
+   . (!defined($sqfd =(defined($_[0]->{-sqgfd}) ? $_[0]->{-sqgfd}->[$col] : undef)) ? ''
+     : ($sqfd->[0] =~/p/i ?'[PK]':'').($sqfd->[0] =~/k/i ?'[WK]':'')
+       .($sqfd->[0] =~/([cirsudv]+)/i ? uc("[$1]") : '').(defined($sqfd->[4]) ? '[F4]' : '') .' ')
+   . (!defined($dbfd =$_[0]->{-dbfds}->[$col]) ? '' 
+     : $dbfd->{NAME} .': ' . ($Tk::TM::Common::SQLType{$dbfd->{TYPE}}||'unknown')
+       .'(' .(defined($dbfd->{PRECISION}) ? $dbfd->{PRECISION} : '') .',' .(defined($dbfd->{SCALE}) ? $dbfd->{SCALE} :'') .') ')
+   . (!defined($sqfd) ? '' : $sqfd->[6])
+   )
+   ));
+ $_[0]->{-wgind}->update if defined($_[1]);
  1
 }
 
@@ -710,7 +724,7 @@ sub RowDel {                 # Delete current row
 sub RowGo {                  # Go to specified row
  my ($self, $row) =@_;
  print "RowGo(",join(', ',map {defined($_) ? $_ : 'null'} @_),"; ",$self->{-dsrid},")\n" if $Tk::TM::Common::Debug;
- my $ret =$self->Stop('#save'); 
+ my $ret =$self->Stop('#save');
  return 0 if !$ret;
  if (!($row eq 'next' && $ret ==2)) {
     $self->dsRowGo($row);
@@ -822,7 +836,7 @@ sub Stop {                   # Stop editing data if any
     $self->wgIndicate();
     return 1;
  }
- if ($opt!~/save/i) {
+ if ($opt!~/save/i) { # insert '1 ||' for debug
     my $reply =$self->StopMsgBox($opt);
     return 0 if $reply =~/c/i && $opt !~/force/i;
     if ($reply =~/[nc]/i) {
@@ -1075,6 +1089,7 @@ sub DBICmd {                 # DBI Command execution
  if (ref($_[0]) =~/array/i && defined($_[1]) && $dbh->{AutoCommit}) {eval {$dbh->{AutoCommit} =0}}
 
  print uc($cmd), " ", $sql || '?', "; \"",join('", "',map {defined($_) ? $_ : 'null'} ref($_[0]) =~/array/i ? @{$_[0]} : @_),"\"\n" if $Tk::TM::Common::Echo;
+ $self->wgIndicate(uc($cmd) .' ' .($sql || '?'));
 
  my $rv =undef;
  if    ($sqx ==2) {

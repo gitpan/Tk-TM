@@ -11,11 +11,10 @@ use Tk::TM::Lib;
 package Tk::TM::wApp;
 require 5.000;
 use strict;
-# require Exporter;
 use Tk::Tree;
 
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
-$VERSION = '0.52';
+$VERSION = '0.53';
 @ISA = ('Tk::MainWindow');
 @EXPORT_OK = qw(DBILogin);
 
@@ -52,10 +51,9 @@ sub initialize {
                                  ,-command=>sub{$self->ScrOpen(@_)}
                                # ,-cursor=>'hand2'
                                  )->pack(-fill=>'y',-side=>'left');
- $self->{-wgscr} =$area->Frame()->pack(-expand=>'yes',-fill=>'both');
- $self->{-wgscr}->configure(-borderwidth=>2,-relief=>'groove');
+ $self->{-wgscr} =$area->Frame(-borderwidth=>2,-relief=>'groove')->pack(-expand=>'yes',-fill=>'both');
+ $self->{-wgmnu}->set(-wgind=>$self->Label(-anchor=>'w',-relief=>'sunken')->pack(-expand=>'yes',-fill=>'x'));
  $self->{-title} =$self->cget(-title);
-
  $self->{-mdnav} ='treee';
  $self->{-parm}  ={}; $self->{-wgmnu}->set(-parm => $self->{-parm});
 
@@ -64,13 +62,11 @@ sub initialize {
  $self->ConfigSpecs(-background=>['CHILDREN']);
  $self->ConfigSpecs(-foreground=>['CHILDREN']);
 
- # print join(',',$self->children()),"\n";
- # print join(',',$self->{-wgnav}->children()),"\n";
-
  $self->bind('<Key-F6>'  ,sub{map {$_->focusForce() if /tree/i} $self->{-wgnav}->children()});
  $self->bind('<Shift-F6>',sub{map {$_->focusForce() if /tree/i} $self->{-wgnav}->children()});
- $self->{-wgnav}->bind('<Key-F6>'  ,sub{$self->{-wgnav}->focusPrev()});
+ $self->{-wgnav}->bind('<Key-F6>'  ,sub{$self->{-wgnav}->focusNext()});
  $self->{-wgnav}->bind('<Shift-F6>',sub{$self->{-wgnav}->focusPrev()});
+
  $self->bind('<Destroy>',sub{$self->destroybind() if $_[0] && $_[0] eq $self});
 
  $self;
@@ -230,7 +226,7 @@ sub DBILogin {
  print "DBILogin(",join(', ',map {defined($_) ? $_ : 'null'} @_),")\n" if $Tk::TM::Common::Debug;
  my ($self, $cmd) =@_;
  return(1) if $cmd !~/start/;
- Tk::TM::Common::DBILogin($self->{-wgscr}
+ Tk::TM::Common::DBILogin([$self->{-wgscr}, $self->{-wgmnu}->set(-wgind)]
                          ,$self->{-parm}->{-dsn}
                          ,$self->{-parm}->{-usr}
                          ,$self->{-parm}->{-psw}

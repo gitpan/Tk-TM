@@ -9,14 +9,12 @@
 package Tk::TM::DataObjSet;
 require 5.000;
 use strict;
-# require Exporter;
 use Tk::TM::Common;
 use Tk::TM::Lang;
 use Tk::TM::DataObject;
 
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
 $VERSION = '0.52';
-# @ISA = qw(Exporter);
 
 use vars qw($Current);
 $Current    =undef;    # Current DataObjSet

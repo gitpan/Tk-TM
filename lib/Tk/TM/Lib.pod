@@ -1719,6 +1719,18 @@ or reference to array of [name, type, options for C<Tk::Menu>].
 
 =over
 
+
+=item "16-18/11/2000"
+
+Bug 'bad event type or keysym "~"' fixed in 'wgMenu.pm'.
+
+Status Line support implemented, but without comments for fields.
+
+Bug of incorrect 'pgup' within table fixed in 'wgTable.pm'.
+
+Scrollbar in 'wgTable.pm' implemented.
+
+
 =item "22/10-03/11/2000"
 
 C<exit> calls replaced with C<Tk::exit> calls to avoid abnormal program 
@@ -1757,7 +1769,7 @@ C<$do-E<gt>DBICnd> - Query condition and sort dialog created.
 C<-dbfaw> DataObject`s parameter added - widget width adaptation to database fields implemented.
 
 
-=item "12/08/2000" - fixed bad event type or keysym 'ä'
+=item "12/08/2000" - fixed "bad event type or keysym 'ä'"
 
 
 =item "06/02/2000" - first documented release

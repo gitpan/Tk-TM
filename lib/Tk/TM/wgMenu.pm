@@ -9,14 +9,13 @@
 package Tk::TM::wgMenu;
 require 5.000;
 use strict;
-# require Exporter;
 use Tk;
 use Tk::TM::Common;
 use Tk::TM::Lang;
 use Tk::TM::DataObjSet;
 
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
-$VERSION = '0.52';
+$VERSION = '0.53';
 @ISA = ('Tk::Frame','Tk::TM::DataObjSet');
 
 Tk::Widget->Construct('tmMenu'); 
@@ -80,7 +79,7 @@ sub Populate {
             ,[$$mt[29],'',-accelerator=>'PageDown',-command=>sub{$self->RowGo('pgdn')}]
             ,[$$mt[30],'',-accelerator=>'Ctrl+End',-command=>sub{$self->RowGo('bot')}]
             ]
-           ,[$$mt[31], 'h' .substr($$mt[30],0,1)
+           ,[$$mt[31], 'h' .substr($$mt[31],0,1)
             ,[$$mt[32],'',-accelerator=>'F1',-command=>sub{$self->Help()}]
             ,[$$mt[33],'',-command=>sub{$self->Help('about')}]
             ]);
@@ -177,6 +176,7 @@ sub MenuBarCreate {
    $mb->add('cascade',-columnbreak=>1,-label=>$nm,-underline=>$um,-font=>$fnt,-menu=>$mp);
    if (!ref($pd->[1]) && defined($pd->[1])) {
       foreach my $c (split //, $pd->[1]) {
+        next if $c =~/~/i;
         my $i =$mi;
         $mw->bind("<Alt-$c>", sub{$mb->postcascade($i)});
       }
@@ -210,6 +210,7 @@ sub MenuButCreate {
    }
    if (!ref($pd->[1]) && defined($pd->[1])) {
       foreach my $c (split //, $pd->[1]) {
+        next if $c =~/~/i;
         my $b =$bc;
         $mw->bind("<Alt-$c>", sub{$b->cget(-menu)->post($b->rootx,$b->rooty +$b->height)});
       }

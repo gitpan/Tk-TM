@@ -167,7 +167,7 @@ sub DataSQG {
     $do->{-sqgfd} =[];
     for (my $i =0; $i <=$#{@{$do->{-dbfds}}}; $i++) {
         push @{$do->{-sqgfd}},
-          ['cru' .($i<5 ? 'ptb' : 'b'), undef, $do->{-dbfds}->[$i]->{NAME},undef,undef,undef,$do->{-dbfds}->[$i]->{NAME},undef,undef,'Entry'];
+          ['cru' .($i<5 ? 'pktb' : 'b'), undef, $do->{-dbfds}->[$i]->{NAME},undef,undef,undef,$do->{-dbfds}->[$i]->{NAME},undef,undef,'Entry'];
         last if $i >8;
     }
     $do->{-sqgsf} =$tbl;
@@ -269,8 +269,8 @@ sub Descriptions {
           -rowcount=>10
          ,-colspecs=>[['NAME'      ,'Entry']
                      ,['TYPE'      ,'Entry',-width=>5]
-                     ,['SCALE'     ,'Entry',-width=>5]
                      ,['PRECIS'    ,'Entry',-width=>5]
+                     ,['SCALE'     ,'Entry',-width=>5]
                      ,['NULLABLE'  ,'Entry',-width=>5]]
          )->pack;
 
@@ -302,7 +302,7 @@ sub Descriptions {
                  eval {$dsc->{SCALE}     =$dbs->{SCALE}->[$i]};
                  eval {$dsc->{PRECISION} =$dbs->{PRECISION}->[$i]};
                  eval {$dsc->{NULLABLE}  =$dbs->{NULLABLE}->[$i]};
-                 $_[0]->dsRowFeed([$dsc->{NAME},$dsc->{TYPE},$dsc->{SCALE},$dsc->{PRECISION},$dsc->{NULLABLE}]);
+                 $_[0]->dsRowFeed([$dsc->{NAME},$dsc->{TYPE},$dsc->{PRECISION},$dsc->{SCALE},$dsc->{NULLABLE}]);
               }
             };
             $dbs->finish; 1;

@@ -9,12 +9,11 @@
 package Tk::TM::wgTable;
 require 5.000;
 use strict;
-# require Exporter;
 use Tk;
 use Tk::TM::Common;
 
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
-$VERSION = '0.52';
+$VERSION = '0.53';
 @ISA = ('Tk::Derived','Tk::Frame');
 
 Tk::Widget->Construct('tmTable'); 
@@ -50,6 +49,7 @@ sub initialize {
  $self->{-do}       =undef; # transaction manager            # configurable
  $self->{-colspecs} =[];    # widgetSpec =$self->[$col]      # configurable
  $self->{-rowcount} =8;     # count of rows                  # configurable
+ $self->{-wgscroll} =undef; # scrollbar
  $self->{-widgets}  =[];    # widget =$self->[$row]->[$col]
 }
 
@@ -96,6 +96,8 @@ sub Remake {
  foreach my $wg ($self->children) {
    $wg->destroy();
  }
+ my $wga =$self;
+    $wga =$self->Frame()->pack(-side=>'left');
 
  my $col =-1;
  foreach my $wgs (@{$self->{-colspecs}}) {
@@ -104,7 +106,7 @@ sub Remake {
        my $wgn =$wgs->[!defined($wgs->[0]) || $wgs->[0] =~/^\d+$/ ? 1 : 0];
        my $wg;
        if ($wgn) {
-          $wg =$self->Label(-text, !ref($wgn) ? $wgn : @$wgn);
+          $wg =$wga->Label(-text, !ref($wgn) ? $wgn : @$wgn);
           $wg->grid(-column=>$col, -row=>0, -sticky=>'w');
        }
  }
@@ -121,13 +123,17 @@ sub Remake {
        $wgi++ while !defined($wgs->[$wgi]) || $wgs->[$wgi] =~/^\d+$/;
        my $wgn =$wgs->[$wgi];
        my @wgs =$#{@$wgs} <$wgi ? () : @{$wgs}[$wgi+1 .. $#{@$wgs}];
-       my $wg  =$self->$wgn(@wgs);
+       my $wg  =$wga->$wgn(@wgs);
        $wg->grid(-column=>$colp, -row=>$row+1, -sticky=>'w');
        $self->{-widgets}->[$row]->[$col] =$wg;
    }
  }
 
  $self->set(-widgets=>$self->{-widgets});
+ $self->{-wgscroll} =$self->Scrollbar(-orient=>'vertical',-command=>['sbCBack'=>$self])
+       ->pack(-fill=>'y',-expand=>'yes');
+ $self->sbSet() if $self->{-wgscroll};
+
  $self
 }
 
@@ -150,38 +156,67 @@ sub Adapt {
 
 #######################
 sub Display {
-  my $self =shift;
-  return $self if !$self->{-do};
-  my $do  =$self->{-do};
-  my $row =-1;
-  my $rowadd =$do->{-dsrid} -($do->{-dsrsd} ||0);
-     $rowadd =0 if $rowadd <0;
-  foreach my $wgrow (@{$self->{-widgets}}) {
-    $row++;
-    my $rowdta =$do->dsRowDta($row +$rowadd);
-    my $col    =-1;
-    foreach my $wg (@$wgrow) {
-      $col++;
-      next if !Exists($wg) || ref($wg) eq 'Tk::Label';
-      eval{${$wg->cget(-textvariable)} =$rowdta->[$col]};
-    }
-  }
-  $self
+ my $self =shift;
+ return $self if !$self->{-do};
+ my $do  =$self->{-do};
+ my $row =-1;
+ my $rowadd =$do->{-dsrid} -($do->{-dsrsd} ||0);
+ if ($rowadd <0) {
+    $rowadd =0;
+    $do->{-dsrsd} =$do->{-dsrid};
+ }
+ foreach my $wgrow (@{$self->{-widgets}}) {
+   $row++;
+   my $rowdta =$do->dsRowDta($row +$rowadd);
+   my $col    =-1;
+   foreach my $wg (@$wgrow) {
+     $col++;
+     next if !Exists($wg) || ref($wg) eq 'Tk::Label';
+     eval{${$wg->cget(-textvariable)} =$rowdta->[$col]};
+   }
+ }
+ $self->sbSet() if $self->{-wgscroll};
+ $self
 }
 
 #######################
 sub Focus {
-  my ($self) =(shift);
-  my $do  =$self->{-do};
-  return if !$do;
-  if (ref($do) && defined($do->{-dsrfd}) && defined($do->{-dsrsd})) {
-     my $wg =$self->{-widgets}->[($do->{-dsrsd} <0 ? 0 : $do->{-dsrsd})]->[$do->{-dsrfd}];
-     return $wg->focusForce() if ref($wg)
-  }
-  else {
-     foreach my $wg (@{$self->{-widgets}->[0]}) {
-        return $wg->focusForce() if ref($wg)
-     }
-  }
-  return $self->focusForce()
+ my ($self) =(shift);
+ my $do  =$self->{-do};
+ return if !$do;
+ if (ref($do) && defined($do->{-dsrfd}) && defined($do->{-dsrsd})) {
+    my $wg =$self->{-widgets}->[($do->{-dsrsd} <0 ? 0 : $do->{-dsrsd})]->[$do->{-dsrfd}];
+    return $wg->focusForce() if ref($wg)
+ }
+ else {
+    foreach my $wg (@{$self->{-widgets}->[0]}) {
+       return $wg->focusForce() if ref($wg)
+    }
+ }
+ return $self->focusForce()
+}
+
+#######################
+sub sbCBack {
+ if    (!$_[0]->{-do}) {}
+ elsif ($_[1] eq 'scroll' && $_[3] eq 'units') {$_[0]->{-do}->RowGo($_[2] >0 ? 'next' : 'prev')}
+ elsif ($_[1] eq 'scroll' && $_[3] eq 'pages') {$_[0]->{-do}->RowGo($_[2] >0 ? 'pgdn' : 'pgup')}
+ elsif ($_[1] eq 'moveto') {$_[0]->{-do}->RowGo(int($_[2] *$_[0]->{-do}->dsRowCount()))}
+}
+
+#######################
+sub sbSet {
+ if    (!$_[0]->{-wgscroll}) {}
+ elsif (!$_[0]->{-do}) {$_[0]->{-wgscroll}->set(0,1)}
+ else {
+   my $t =$_[0]->{-do}->{-dsrid} -$_[0]->{-do}->{-dsrsd};
+   my $b =$t +$_[0]->{-rowcount} -1;
+   my $c =$_[0]->{-do}->dsRowCount() -1;
+      $c =1  if $c <=0;
+   if ($b >$c) {
+      $t =$t +$c -$b; $t =0 if $t <0;
+      $c =$b
+   }
+   $_[0]->{-wgscroll}->set($t/$c,$b/$c);
+ }
 }

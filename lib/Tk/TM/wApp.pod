@@ -352,6 +352,10 @@ C<Tk::Frame> widget is used.
 
 =over
 
+=item "16-18/11/2000"
+
+Status Line implemented.
+
 
 =item "22-25/10/2000"
 
